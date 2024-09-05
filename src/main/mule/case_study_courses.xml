@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+    <sub-flow name="set_table_courses" doc:id="868e4fb4-9fcc-4315-8f4f-82e06df1edba" >
+		<set-variable value="courses" doc:name="Set Table" doc:id="f7a81acb-303f-41a3-906a-d70aea554276" variableName="table" />
+		<set-variable value="(id, name)" doc:name="Set Columns" doc:id="299c81b5-0209-4478-896c-8f80c3d3072a" variableName="columns"/>
+	</sub-flow>
+	<flow name="\courses:get" doc:id="2b80b09b-d9a8-43aa-8110-18179181a652">
+        <logger level="INFO" message="get:\:case_study_courses-config" />
+		<flow-ref doc:name="Set Table" doc:id="e272f3d8-6b78-4bcf-b0a4-9ca5a46df881" name="set_table_courses"/>
+		<flow-ref doc:name="database_get_all" doc:id="74b2c4fd-69ab-4c93-b197-6d2cfdb250f5" name="database_get_all"/>
+    </flow>
+	<flow name="\courses:put">
+        <logger level="INFO" message="put:\:application\json:case_study_courses-config" />
+		<set-variable value="#[payload.id as String&#10;++ &quot;,'&quot; ++ payload.name ++&quot;'&quot;]" doc:name="Set Variable" doc:id="0a3f8b96-7ada-4a7c-94ad-2023f78d572b" variableName="values"/>
+		<flow-ref doc:name="Set Table" doc:id="a6b75554-fec0-402e-9c70-56bdd79b6cd2" name="set_table_courses" />
+		<flow-ref doc:name="database_merge" doc:id="b233d73e-c9ef-409b-a22d-704c3710d31a" name="database_merge"/>
+    </flow>
+    <flow name="\courses:post">
+        <logger level="INFO" message="post:\:application\json:case_study_courses-config" />
+		<set-variable value="#[&quot;'&quot; ++ payload.name ++ &quot;'&quot;]" doc:name="Set Variable" doc:id="9ad6ceb6-84b5-4e14-9a62-bedc057dee48" variableName="values"/>
+		<flow-ref doc:name="Set Table" doc:id="49e48059-45be-4200-9f6b-06e9135d379e" name="set_table_courses"/>
+		<set-variable value="(name)" doc:name="Re-Set Columns" doc:id="1de3fe34-b8bb-4374-ac99-7380da3793c3" variableName="columns"/>
+		<flow-ref doc:name="database_insert" doc:id="d4b691ca-5d60-4b4d-a2b3-454b58b64bd4" name="database_insert"/>
+    </flow>
+	<flow name="\courses\(id):get" doc:id="18771e2a-aba2-4b49-98ea-270313c0a2cb">
+        <logger level="INFO" message="get:\(id):case_study_courses-config" />
+		<set-variable value="#[&quot;id=&quot; ++ attributes.uriParams.'id']" doc:name="Set Variable" doc:id="bf958c88-db5e-402d-8669-c36a45b9df6e" variableName="where"/>
+		<flow-ref doc:name="Set Table" doc:id="7d8d0312-8460-4471-9d03-527039721fa3" name="set_table_courses"/>
+		<flow-ref doc:name="database_get_by_id" doc:id="23711910-7ac9-413f-8a9e-67b7d6d1b92d" name="database_get_by_id"/>
+    </flow>
+	<flow name="\courses\(id):patch" doc:id="1698298d-9a29-4369-b40e-f0e967f0c6b0">
+        <logger level="INFO" message="patch:\(id):application\json:case_study_courses-config" />
+		<set-variable value="#[output text/plain&#10;---&#10;attributes.uriParams.id&#10;++ &quot;,'&quot; ++ payload.name ++ &quot;'&quot;]" doc:name="Set Variable" doc:id="5aa0302a-a1c9-4f7e-875e-27da28182505" variableName="values"/>
+		<flow-ref doc:name="Set Table" doc:id="0c09f54d-da02-4852-8575-06424c8c8d6b" name="set_table_courses"/>
+		<flow-ref doc:name="database_merge" doc:id="4e8683c4-30fd-4397-8f88-bb6d84414bd1" name="database_merge"/>
+    </flow>
+	<flow name="\courses\(id):delete">
+        <logger level="INFO" message="delete:\(id):case_study_courses-config" />
+		<set-variable value='#["id=" ++ attributes.uriParams.id]' doc:name="Set Variable" doc:id="3e5bd87d-41d6-4348-b07b-7faa7060c918" variableName="where"/>
+		<flow-ref doc:name="Set Table" doc:id="78941b44-92a4-4876-a526-4fd2db72215f" name="set_table_courses"/>
+		<flow-ref doc:name="database_delete" doc:id="165b2e3a-5c09-4298-bf06-abde5fe717da" name="database_delete"/>
+    </flow>
+</mule>

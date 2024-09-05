@@ -1,0 +1,8 @@
+%dw 2.0
+
+type auto_7ecf3740_7e3a_4ed6_8635_a43dee82a4a2_Input_Variables_course = {
+  name: String, 
+  id?: Number, 
+  _?: Any
+}
+

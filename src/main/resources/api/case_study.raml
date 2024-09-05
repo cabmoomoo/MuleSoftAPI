@@ -1,0 +1,156 @@
+#%RAML 1.0
+types:
+  Student:
+    (Students): group
+    properties:
+      id?:
+        example: 5
+        type: number
+        minimum: 1
+        format: int
+      name:
+        example: John
+        type: string
+      age:
+        example: 22
+        type: number
+        format: int
+  Course:
+    (Courses): group
+    properties:
+      id?:
+        example: 8
+        type: number
+        minimum: 1
+        format: int
+      name:
+        example: Biology
+        type: string
+  Student_Course:
+    properties:
+      student_id:
+        example: 5
+        type: number
+        minimum: 1
+        format: int
+      course_id:
+        example: 8
+        type: number
+        minimum: 1
+        format: int
+annotationTypes:
+  Students:
+    type: any
+  Courses:
+    type: any
+  Student_Course:
+    type: any
+title: University Semester
+mediaType:
+  - application/json
+version: "0.1"
+protocols:
+  - HTTP
+/courses:
+  get:
+    displayName: Get all courses
+    responses:
+      "200":
+        body:
+          items:
+            type: Course
+  post:
+    displayName: Create new course
+    body:
+      type: Course
+  put:
+    displayName: Create or update course
+    body:
+      type: Course
+  (Courses): group
+/students:
+  get:
+    displayName: Get all students
+    responses:
+      "200":
+        body:
+          items:
+            type: Student
+  post:
+    displayName: Create new student
+    body:
+      type: Student
+    responses:
+      "200": {}
+  put:
+    displayName: Create or update a student
+    body:
+      type: Student
+    responses:
+      "200": {}
+  (Students): group
+/courses/students:
+  get:
+    description: Get all courses with all enrolled students
+    responses:
+      "200":
+        body:
+          properties:
+            course_name:
+              example: Biology
+              type: string
+            student_names:
+              items:
+                example: John
+                type: string
+  post:
+    description: Enroll a student in a course
+    body:
+      type: Student_Course
+  patch:
+    description: Transfer student
+    body:
+      type: Student_Course
+  delete:
+    description: Remove student from course
+    body:
+      type: Student_Course
+  (Student_Course): group
+/courses/{id}:
+  get:
+    displayName: Get a course
+    responses:
+      "200":
+        body:
+          type: Course
+  patch:
+    displayName: Update a course
+    body:
+      type: Course
+  delete:
+    displayName: Delete a course
+    body: {}
+  (Courses): group
+/students/{id}:
+  get:
+    displayName: Get a student
+    responses:
+      "200":
+        body:
+          type: Student
+  patch:
+    displayName: Update a student
+    body:
+      type: Student
+  delete:
+    displayName: Delete a student
+  (Students): group
+(Students):
+  name: Group
+  description: Group annotation
+(Courses):
+  name: Group
+  description: Group annotation
+(Student_Course):
+  name: Group
+  description: Group annotation

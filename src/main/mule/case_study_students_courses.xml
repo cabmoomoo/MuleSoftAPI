@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="set_table_students_courses" doc:id="9f2ec4a0-b8c5-4fb6-a02b-8ec452ab978c" >
+		<set-variable value="students_courses" doc:name="Set Table" doc:id="1b65b74f-d1f6-4321-8028-2bda93d3013d" variableName="table"/>
+		<set-variable value="(student_id, course_id)" doc:name="Set Columns" doc:id="1c73cf0e-8b1d-41d5-a9e8-998b9850666c" variableName="columns"/>
+	</flow>
+	<flow name="get_students_courses" doc:id="ccc2f49b-9a25-4967-b1e6-0ee6ec6f8c7f" >
+		<flow-ref doc:name="Set Table" doc:id="2ba37ab1-6027-44eb-88c4-0056bc132b10" name="set_table_students_courses"/>
+		<flow-ref doc:name="database_get_all" doc:id="757b8233-4421-4936-a718-4b6660e22e88" name="database_get_all"/>
+	</flow>
+	<flow name="\courses\students:get" doc:id="15f2d3d7-c67e-4441-9490-e247b35faf97" >
+		<logger level="INFO" doc:name="Logger" doc:id="37adf21b-7300-4fff-acf0-922ccdff010b" message="\courses\students:get"/>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="ce5e60aa-5509-4577-8eff-f9fc77ed7b78" >
+			<route >
+				<flow-ref doc:name="Get all students" doc:id="ac087585-1909-4025-a9e0-c22e797268e9" name="\students:get" target="students"/>
+			</route>
+			<route >
+				<flow-ref doc:name="Get all courses" doc:id="7f13520f-5cd7-4d10-a538-09d8703a7a99" name="\courses:get" target="courses"/>
+			</route>
+			<route >
+				<flow-ref doc:name="Get all associations" doc:id="44a56f95-01ec-4801-b286-68314e3c920f" name="get_students_courses" target="students_courses"/>
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="Transform Message" doc:id="884b3492-8167-4da8-8d9c-bcb8ee0d08bd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.courses map (course) -> 
+{
+	"Course": course.name,
+	"Students":
+		flatten(vars.students_courses filter ($.course_id == course.id) map (association) -> (
+			vars.students filter ($.id == association.student_id)
+		).name)
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="\courses\students:post" doc:id="32862d6f-9d26-4946-80ed-ad523f9e2a1a" >
+		<logger level="INFO" doc:name="Logger" doc:id="d37e5143-9004-4a6d-8cc2-bcbad722a946" message="\courses\students:post"/>
+		<set-variable value='#[payload.student_id as Number as String&#10;++ "," ++ payload.course_id as Number as String]' doc:name="Set Values" doc:id="f37ccb98-f983-403f-895f-aa2f68627610" variableName="values"/>
+		<flow-ref doc:name="Set Table" doc:id="749ee633-4f8f-4eec-84e2-af67b96a6b7b" name="set_table_students_courses"/>
+		<flow-ref doc:name="database_insert" doc:id="a9a12d1f-3085-4846-81d1-815efd50190e" name="database_insert"/>
+	</flow>
+	<flow name="\courses\students:patch" doc:id="ef5bae1e-886c-4da1-b31d-119d9f8f1253" >
+		<logger level="INFO" doc:name="Logger" doc:id="26206f6f-5c9e-4d68-b5e3-6196a09cc69d" message="\courses\students:put"/>
+		<set-variable value='#[payload.student_id as String&#10;++ "," ++ payload.course_id as String]' doc:name="Set Values" doc:id="5b0e2125-e798-4bc9-afd6-39054b01534e" variableName="values"/>
+		<flow-ref doc:name="Set Table" doc:id="aa6003a4-8c60-413d-8c20-fec9ccf293cf" name="set_table_students_courses"/>
+		<flow-ref doc:name="database_merge" doc:id="c66c5af6-7e10-4f6b-90ba-005b5234fe13" name="database_merge"/>
+	</flow>
+	<flow name="\courses\students:delete" doc:id="f170fc88-dc7c-4f86-9a8b-e70df1e22e5e" >
+		<logger level="INFO" doc:name="Logger" doc:id="eb2377d0-ce90-40b2-ae80-5d7922e4c0c9" message="\courses\students:delete"/>
+		<set-variable value='#["student_id=" ++ payload.student_id as String&#10;++ " AND course_id=" ++ payload.course_id as String]' doc:name="Set Where" doc:id="5fccef08-dd05-493a-8759-368d84b7f9ab" variableName="where"/>
+		<flow-ref doc:name="Set Table" doc:id="414d9996-2749-4502-bba7-5034ca9bbf12" name="set_table_students_courses"/>
+		<flow-ref doc:name="database_delete" doc:id="69c0ed65-c459-4e79-9e7b-e84a711e5516" name="database_delete"/>
+	</flow>
+</mule>

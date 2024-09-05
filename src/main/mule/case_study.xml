@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:apikit-soap="http://www.mulesoft.org/schema/mule/apikit-soap"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/apikit-soap http://www.mulesoft.org/schema/mule/apikit-soap/current/mule-apikit-soap.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+    <http:listener-config name="case_study_api-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8081" />
+    </http:listener-config>
+    <apikit:config name="case_study-config" api="api/case_study.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" >
+		<apikit:flow-mappings >
+			<apikit:flow-mapping resource="/students" action="get" flow-ref="\students:get" />
+			<apikit:flow-mapping resource="/students" action="post" content-type="application/json" flow-ref="\students:post" />
+			<apikit:flow-mapping resource="/students" action="put" content-type="application/json" flow-ref="\students:put" />
+			<apikit:flow-mapping resource="/students/{id}" action="get" flow-ref="\students\(id):get" />
+			<apikit:flow-mapping resource="/students/{id}" action="patch" content-type="application/json" flow-ref="\students\(id):patch" />
+			<apikit:flow-mapping resource="/students/{id}" action="delete" flow-ref="\students\(id):delete" />
+			<apikit:flow-mapping resource="/courses" action="get" flow-ref="\courses:get" />
+			<apikit:flow-mapping resource="/courses" action="post" content-type="application/json" flow-ref="\courses:post" />
+			<apikit:flow-mapping resource="/courses" action="put" content-type="application/json" flow-ref="\courses:put" />
+			<apikit:flow-mapping resource="/courses/{id}" action="get" flow-ref="\courses\(id):get" />
+			<apikit:flow-mapping resource="/courses/{id}" action="patch" content-type="application/json" flow-ref="\courses\(id):patch" />
+			<apikit:flow-mapping resource="/courses/students" action="get" flow-ref="\courses\students:get" />
+			<apikit:flow-mapping resource="/courses/students" action="post" content-type="application/json" flow-ref="\courses\students:post" />
+			<apikit:flow-mapping resource="/courses/students" action="delete" content-type="application/json" flow-ref="\courses\students:delete" />
+			<apikit:flow-mapping resource="/courses/{id}" action="delete" flow-ref="\courses\(id):delete" />
+		</apikit:flow-mappings>
+	</apikit:config>
+	<http:request-config name="Database_Local_HTTP_Request" doc:name="HTTP Request configuration" doc:id="87982ba1-f647-4034-9739-a9c9bdb6bab8" >
+		<http:request-connection host="127.0.0.1" port="12050" />
+	</http:request-config>
+	<flow name="case_study-main">
+        <http:listener config-ref="case_study_api-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="case_study-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+	<flow name="case_study-console">
+        <http:listener config-ref="case_study_api-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="case_study-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+	<flow name="database_get_all" doc:id="876f0f76-f9c5-471a-999d-2d81f28e39f6" >
+		<http:request method="GET" doc:name="Request" doc:id="0b4dc87f-3d38-4bfa-afe2-f9b01268c935" config-ref="Database_Local_HTTP_Request" path='#["/" ++ vars.table]'/>
+	</flow>
+	<flow name="database_get_by_id" doc:id="ad35b27c-1080-4929-8c65-2cdf22fed53f" >
+		<http:request method="POST" doc:name="Request" doc:id="8e561947-4a26-41f8-a399-163c1b7ce4de" config-ref="Database_Local_HTTP_Request" path="/">
+			<http:body ><![CDATA[#[output text/plain
+---
+"SELECT * FROM " ++ vars.table ++ " WHERE " ++ vars.where ++ ";"]]]></http:body>
+		</http:request>
+	</flow>
+	<flow name="database_insert" doc:id="7b9e4d56-8014-43f9-82d3-052d2c6142bd">
+		<http:request method="POST" doc:name="Request" doc:id="d90b2af8-eec8-423e-932b-5676a04a2fa3" config-ref="Database_Local_HTTP_Request" path="/">
+			<http:body><![CDATA[#[output text/plain
+---
+"INSERT INTO " ++ vars.table ++ vars.columns ++ " VALUES ("
+++ vars.values
+++ ");"]]]></http:body>
+		</http:request>
+	</flow>
+	<flow name="database_merge" doc:id="6056c509-a820-4b21-8465-e804039c6e20" >
+		<http:request method="POST" doc:name="Request" doc:id="e4a6abb2-613e-4d6a-b938-02f286b1cb22" config-ref="Database_Local_HTTP_Request" path="/">
+			<http:body ><![CDATA[#[output text/plain
+---
+"MERGE INTO " ++ vars.table ++ vars.columns ++ " VALUES(" 
+++ vars.values
+++ ");"]]]></http:body>
+		</http:request>
+	</flow>
+	<flow name="database_delete" doc:id="7ecf3740-7e3a-4ed6-8635-a43dee82a4a2" >
+		<http:request method="POST" doc:name="Request" doc:id="f9021374-3d1a-439d-9c81-65beaeb455fe" config-ref="Database_Local_HTTP_Request" path="/">
+			<http:body ><![CDATA[#[output text/plain
+---
+"DELETE FROM " ++ vars.table ++ " WHERE " ++ vars.where ++ ";"]]]></http:body>
+		</http:request>
+	</flow>
+</mule>

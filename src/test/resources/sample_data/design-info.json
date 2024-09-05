@@ -1,0 +1,9 @@
+{
+  "sampleData": {
+    "884b3492-8167-4da8-8d9c-bcb8ee0d08bd": {
+      "vars-students": "sample_data/list_java_2.dwl",
+      "vars-students_courses": "sample_data/list_java.dwl",
+      "vars-courses": "sample_data/list_java_1.dwl"
+    }
+  }
+}

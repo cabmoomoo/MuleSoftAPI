@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:apikit-soap="http://www.mulesoft.org/schema/mule/apikit-soap" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/apikit-soap http://www.mulesoft.org/schema/mule/apikit-soap/current/mule-apikit-soap.xsd">
+	<sub-flow name="set_table_students" doc:id="d9e4830a-259e-4bc8-aefe-0a7aa08bc698">
+		<set-variable value="students" doc:name="Set Table" doc:id="e3d648cb-fabb-4715-98fe-89ac02a926e8" variableName="table" />
+		<set-variable value='#["(id, name, age)"]' doc:name="Set Columns" doc:id="04117f92-8454-45d1-8539-d18906eb1993" variableName="columns"/>
+	</sub-flow>
+	<flow name="\students:get" doc:id="04f78d79-0397-483a-ac74-e2aa0e9fc62b">
+        <logger level="INFO" message="get:\students:case_study_students-config" />
+		<flow-ref doc:name="Set Table" doc:id="84781b49-6fea-4d1a-9345-e361c95516fc" name="set_table_students"/>
+		<flow-ref doc:name="database_get_all_students" doc:id="c36d8513-eb20-4d6f-9e2c-35ea752bc42d" name="database_get_all_students" />
+    </flow>
+	<flow name="\students:put">
+        <logger level="INFO" message="put:\students:application\json:case_study_students-config" />
+		<set-variable value="#[payload.id as String&#10;++ &quot;,'&quot; ++ payload.name ++ &quot;'&quot;&#10;++ &quot;,&quot; ++ payload.age as String]" doc:name="Set Variable" doc:id="2b9ec4b5-0216-423d-a54f-f3f72f9c34d9" variableName="values"/>
+		<flow-ref doc:name="Set Table" doc:id="9c600408-8055-47fd-b2a8-1bb653341fbb" name="set_table_students"/>
+		<flow-ref doc:name="database_merge" doc:id="8d4df928-7baf-4c7d-bb1b-8601e36206df" name="database_merge"/>
+    </flow>
+    <flow name="\students:post" doc:id="50ec2696-1a08-48a4-ad61-1dae205b4a7f" >
+		<logger level="INFO" doc:name="Logger" doc:id="b9a09875-bfd4-42b4-8a59-f1c870ce839d" message="post:\students:application\json:case_study_students-config"/>
+		<set-variable value="#[&quot;'&quot; ++ payload.name ++ &quot;',&quot;&#10;++ payload.age as String]" doc:name="Set Variable" doc:id="62edf07b-f7a1-4a75-845b-7f76a7679fcf" variableName="values"/>
+		<flow-ref doc:name="Set Table" doc:id="e553db92-beac-46fd-906a-2b14fb005aa2" name="set_table_students"/>
+		<set-variable value="(name,age)" doc:name="Re-Set Columns" doc:id="342a7d1f-c991-400c-842b-4881b574ae3a" variableName="columns"/>
+		<flow-ref doc:name="database_insert" doc:id="411fd361-647c-4dd1-9b60-63fa40af6fa3" name="database_insert"/>
+	</flow>
+	<flow name="\students\(id):get">
+        <logger level="INFO" message="get:\students\(id):case_study_students-config" />
+		<set-variable value='#["id=" ++ attributes.uriParams.id]' doc:name="Set Variable" doc:id="285a15bb-5f29-4725-b739-3d7ba152d124" variableName="where"/>
+		<flow-ref doc:name="Set table" doc:id="57b47844-0ebb-406e-8c58-68d55ea747a7" name="set_table_students" />
+		<flow-ref doc:name="database_get_by_id" doc:id="9d30daf4-4438-48c8-909f-114184570a3a" name="database_get_by_id" />
+    </flow>
+	<flow name="\students\(id):patch" doc:id="4132120f-e3b6-4293-852d-47f4595efc4f">
+        <logger level="INFO" message="patch:\students\(id):application\json:case_study_students-config" />
+		<set-variable value="#[payload.id as String&#10;++ &quot;,'&quot; ++ payload.name ++ &quot;'&quot;&#10;++ &quot;,&quot; ++ payload.age as String]" doc:name="Set Variable" doc:id="a9a130f6-c883-417b-a8f0-735fb17cf18c" variableName="values" />
+		<flow-ref doc:name="Set Table" doc:id="9876a5d8-8e62-4562-a192-e8e01d01d83c" name="set_table_students" />
+		<flow-ref doc:name="database_merge" doc:id="bf3fd30d-dc2d-4241-83e9-97684eca7f03" name="database_merge" />
+    </flow>
+	<flow name="\students\(id):delete">
+        <logger level="INFO" message="delete:\students\(id):case_study_students-config" />
+		<set-variable value='#["id=" ++ attributes.uriParams.id]' doc:name="Set WHERE" doc:id="02d7e3a1-b622-43a5-b5f1-7b3621b9db1b" variableName="where" />
+		<flow-ref doc:name="Set Table" doc:id="3fd89d1e-43b0-40eb-9f2c-7f1dcdd3704c" name="set_table_students"/>
+		<flow-ref doc:name="database_delete" doc:id="24e794fa-cd00-4034-97bb-95f694c8aaeb" name="database_delete"/>
+    </flow>
+	<flow name="database_get_all_students" doc:id="325ea99c-d978-401a-be54-445617fd5f55" >
+		<http:request method="GET" doc:name="Request" doc:id="f55380bf-3268-4ba1-bd94-0ce27cd8b64b" config-ref="Database_Local_HTTP_Request" path="/students" outputMimeType="application/json" targetValue="#[output application/json&#10;---&#10;payload]"/>
+	</flow>
+</mule>

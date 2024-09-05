@@ -1,0 +1,8 @@
+%dw 2.0
+
+type auto_ad35b27c_1080_4929_8c65_2cdf22fed53f_Output_Variables_course = {
+  name: String, 
+  id?: Number, 
+  _?: Any
+}
+
